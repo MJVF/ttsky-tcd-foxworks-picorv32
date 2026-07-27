@@ -102,7 +102,7 @@ module tt_um_foxworks_picorv32 (
 
 	picosoc #(
 		// ---- memory geometry ----
-		.MEM_WORDS      (32),            // 256 B SRAM, stack top = 0x100
+		.MEM_WORDS      (32),            // 128 B SRAM, stack top = 0x80
 		.PROGADDR_RESET (32'h 0000_0400),// flash offset 0x400
 		.PROGADDR_IRQ   (32'h 0000_0000),// unused (IRQ disabled)
 		// ---- area configuration: everything off ----
