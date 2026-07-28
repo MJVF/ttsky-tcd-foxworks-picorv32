@@ -98,7 +98,7 @@ async def test_selftest(dut):
     # ~12.5 MHz SPI, so the full 11-test suite is ~15M DUT clocks.
     # Poll in small chunks so we exit promptly once the verdict lands.
     CHUNK = 200
-    ROUNDS = 100000                      # 20M clk budget (~800 ms sim)
+    ROUNDS = 250000                      # 50M clk budget (GL is ~3x slower than RTL)
     for r in range(ROUNDS):
         await ClockCycles(dut.clk, CHUNK)
 
