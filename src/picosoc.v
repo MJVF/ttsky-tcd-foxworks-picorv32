@@ -259,7 +259,7 @@ module picosoc_mem #(
 ) (
 	input clk,
 	input [3:0] wen,
-	input [$clog2(MEM_WORDS)-1:0] addr,
+	input [$clog2(WORDS)-1:0] addr,
 	input [31:0] wdata,
 	output reg [31:0] rdata
 );
