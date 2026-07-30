@@ -28,6 +28,7 @@ module tb ();
     #1;
   end
 
+
   // DUT pins
   reg  clk;
   reg  rst_n;
@@ -97,5 +98,62 @@ module tb ();
       .s_axi_rvalid (),
       .s_axi_rready (1'b0)
   );
+
+  // ------------------------------------------------------------------
+  // X-MONITOR
+  //
+  // Timestamps the FIRST X on each boundary signal, once each. With the
+  // harness echo removed, the ORDER of these prints localizes the fault:
+  //
+  //   uio_in first   -> X arrived FROM the harness (flash model / RX)
+  //   uio_oe first   -> spimemio's output-enable state went X
+  //   uio_out first  -> flash datapath or UART TX went X
+  //   uo_out first   -> core / GPIO register went X
+  //
+  // Whichever timestamp is EARLIEST is the source; everything after it
+  // is spread. `^bus === 1'bx` is the standard "any bit is X" idiom:
+  // XOR-reduction of a vector containing X yields X.
+  // ------------------------------------------------------------------
+  reg x_uo = 0, x_uio_out = 0, x_uio_oe = 0, x_uio_in = 0, x_miso = 0;
+
+  always @(posedge clk) begin
+    if (rst_n === 1'b1) begin           // only once out of reset
+      if (!x_uio_in  && (^uio_in  === 1'bx)) begin
+        x_uio_in  <= 1'b1;
+        $display("[X-MON %0t ns] FIRST X on uio_in  = %b  <-- from HARNESS", $time, uio_in);
+      end
+      if (!x_uio_oe  && (^uio_oe  === 1'bx)) begin
+        x_uio_oe  <= 1'b1;
+        $display("[X-MON %0t ns] FIRST X on uio_oe  = %b  <-- spimemio OE state", $time, uio_oe);
+      end
+      if (!x_uio_out && (^uio_out === 1'bx)) begin
+        x_uio_out <= 1'b1;
+        $display("[X-MON %0t ns] FIRST X on uio_out = %b  <-- flash/UART datapath", $time, uio_out);
+      end
+      if (!x_uo      && (^uo_out  === 1'bx)) begin
+        x_uo      <= 1'b1;
+        $display("[X-MON %0t ns] FIRST X on uo_out  = %b  <-- core/GPIO", $time, uo_out);
+      end
+      // MISO is the one input the harness legitimately drives - if this
+      // goes X the flash model is the culprit, not the DUT.
+      if (!x_miso && (vdb.spi_miso === 1'bx)) begin
+        x_miso <= 1'b1;
+        $display("[X-MON %0t ns] FIRST X on spi_miso <-- FLASH MODEL output", $time);
+      end
+    end
+  end
+
+  // Confirm the inputs the DUT is fed are clean at reset release, so a
+  // later X cannot be blamed on the stimulus.
+  initial begin
+    @(posedge rst_n);
+    @(posedge clk);
+    $display("[X-MON %0t ns] at reset release: ui_in=%b uio_in=%b ena=%b rst_n=%b",
+             $time, ui_in, uio_in, ena, rst_n);
+    if ((^uio_in === 1'bx) || (^ui_in === 1'bx))
+      $display("[X-MON] WARNING: DUT inputs already contain X at reset release");
+    else
+      $display("[X-MON] DUT inputs are fully defined at reset release");
+  end
 
 endmodule

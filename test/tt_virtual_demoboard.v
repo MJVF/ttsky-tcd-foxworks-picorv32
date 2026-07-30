@@ -5,7 +5,7 @@
  * Tiny Tapeout demo board: the RP2040 acting as SPI flash, the UART
  * link, and the (pulled-up / undriven) state of released pins.
  *
- * Sits next to tt_um_foxworks_picorv32 in the block design and closes the
+ * Sits next to tt_um_michael_picosoc in the block design and closes the
  * loop on its uio bus:
  *
  *      PS --AXI-Lite--> [firmware loader] --> 64 KB flash store
@@ -13,10 +13,12 @@
  *      axi_uartlite TX -> uart_rx_i ------------------------- --> uio_in[7]
  *      uio_out[6] (SoC TX) ----------------------------------> uart_tx_o
  *
- * The whole module runs on one clock (AXI + oversampling domain),
- * nominally 200 MHz; anything >= ~150 MHz oversamples the 25 MHz SCK
- * with margin (the ZU+ PS PLL may actually deliver e.g. 177.776 MHz -
- * fine). The tt_um module runs at 50 MHz; the uio nets between the
+ * The whole module runs on one clock (AXI + oversampling domain).
+ * Requirement is a ratio, not a rate: >= ~6x SCK (= 3x the chip
+ * clock). At 25 MHz chip / 125 MHz harness that is 10x. The ZU+ PS
+ * PLL delivers the closest achievable frequency rather than exactly
+ * what you asked for - the RTL declares no FREQ_HZ, so any value
+ * meeting the ratio is fine. The tt_um module runs at 50 MHz; the uio nets between the
  * two blocks are treated as asynchronous by construction (the flash
  * model double-synchronizes them), so the related-clock timing Vivado
  * applies to these paths is stricter than necessary, not looser.
@@ -42,7 +44,7 @@ module tt_virtual_demoboard (
 	(* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_LOW" *)
 	input  wire        rst_n,
 
-	// ---- Tiny Tapeout uio bus (to/from tt_um_foxworks_picorv32) ----
+	// ---- Tiny Tapeout uio bus (to/from tt_um_michael_picosoc) ----
 	input  wire [7:0]  uio_out,
 	input  wire [7:0]  uio_oe,
 	output wire [7:0]  uio_in,
@@ -84,14 +86,30 @@ module tt_virtual_demoboard (
 	// Input bus back into the chip: flash MISO on IO1, UART RX on [7],
 	// everything the SoC itself drives is simply echoed (it never reads
 	// those lines in serial mode; the echo keeps waveforms honest).
+	// uio_in is driven from CONSTANTS and the flash model ONLY - it must
+	// never echo uio_out. The old echo created a combinational feedback
+	// path chip -> harness -> chip: the instant any uio_out bit went X it
+	// re-entered the DUT as an input, spread, and destroyed the evidence
+	// of where the X started (uio_in and uio_out going X on the same edge
+	// is exactly that signature). MISO on [3] is the ONE bit the harness
+	// legitimately drives; everything else the chip drives itself, so the
+	// DUT has no business reading it back.
+	//   [7] RX     - idle high (self-test T11 checks this bit is 1)
+	//   [6] TX     - chip output; nothing reads it
+	//   [5] IO3    - /HOLD, inactive high (unused in serial mode)
+	//   [4] IO2    - /WP,   inactive high (unused in serial mode)
+	//   [3] IO1    - MISO, from the flash model
+	//   [2] IO0    - MOSI: chip output
+	//   [1] CSB    - chip output
+	//   [0] SCK    - chip output
 	assign uio_in = {uart_rx_i,   // [7] SERIAL_RX
-	                 uio_out[6],  // [6] echo TX
-	                 uio_out[5],  // [5] echo IO3
-	                 uio_out[4],  // [4] echo IO2
-	                 spi_miso,    // [3] IO1 = MISO
-	                 uio_out[2],  // [2] echo IO0/MOSI
-	                 uio_out[1],  // [1] echo CSB
-	                 uio_out[0]}; // [0] echo SCK
+	                 1'b0,        // [6] SERIAL_TX (output)
+	                 1'b1,        // [5] IO3 = /HOLD inactive
+	                 1'b1,        // [4] IO2 = /WP   inactive
+	                 spi_miso,    // [3] IO1 = MISO from the flash model
+	                 1'b0,        // [2] IO0/MOSI (output)
+	                 1'b0,        // [1] CSB (output)
+	                 1'b0};       // [0] SCK (output)
 
 	assign uart_tx_o = uio_out[6];
 
@@ -172,7 +190,8 @@ module tt_virtual_demoboard (
 	);
 
 	// Lint tie-off
-	wire _unused = &{s_axi_awprot, s_axi_arprot, uio_out[7], uio_oe[7:3], 1'b0};
+	wire _unused = &{s_axi_awprot, s_axi_arprot, uio_out[7],
+	                 uio_out[6:3], uio_oe[7:3], 1'b0};
 
 endmodule
 
