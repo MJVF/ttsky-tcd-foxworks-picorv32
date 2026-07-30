@@ -227,7 +227,7 @@ module picosoc (
 	) memory (
 		.clk(clk),
 		.wen((mem_valid && !mem_ready && mem_addr < 4*MEM_WORDS) ? mem_wstrb : 4'b0),
-		.addr(mem_addr[23:2]),
+		.addr(mem_addr[$clog2(MEM_WORDS)+1:2]),
 		.wdata(mem_wdata),
 		.rdata(ram_rdata)
 	);
@@ -259,7 +259,7 @@ module picosoc_mem #(
 ) (
 	input clk,
 	input [3:0] wen,
-	input [21:0] addr,
+	input [$clog2(MEM_WORDS)-1:0] addr,
 	input [31:0] wdata,
 	output reg [31:0] rdata
 );
