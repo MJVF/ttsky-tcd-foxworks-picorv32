@@ -226,6 +226,7 @@ module picosoc (
 		.WORDS(MEM_WORDS)
 	) memory (
 		.clk(clk),
+		.resetn(resetn),
 		.wen((mem_valid && !mem_ready && mem_addr < 4*MEM_WORDS) ? mem_wstrb : 4'b0),
 		.addr(mem_addr[$clog2(MEM_WORDS)+1:2]),
 		.wdata(mem_wdata),
@@ -236,6 +237,54 @@ endmodule
 // Implementation note:
 // Replace the following two modules with wrappers for your SRAM cells.
 
+module picosoc_regs (
+	input clk, wen,
+	input [5:0] waddr,
+	input [5:0] raddr1,
+	input [5:0] raddr2,
+	input [31:0] wdata,
+	output [31:0] rdata1,
+	output [31:0] rdata2
+);
+	reg [31:0] regs [0:31];
+
+	always @(posedge clk)
+		if (wen) regs[waddr[4:0]] <= wdata;
+
+	assign rdata1 = regs[raddr1[4:0]];
+	assign rdata2 = regs[raddr2[4:0]];
+endmodule
+
+module picosoc_mem #(
+	parameter integer WORDS = 256
+) (
+	input clk,
+	input resetn,
+	input [3:0] wen,
+	input [$clog2(WORDS)-1:0] addr,
+	input [31:0] wdata,
+	output reg [31:0] rdata
+);
+	reg [31:0] mem [0:WORDS-1];
+	integer i;
+
+	always @(posedge clk or negedge resetn) begin
+		if (!resetn) begin
+			for (i = 0; i < WORDS; i = i + 1)
+				mem[i] <= 32'h0000_0000;
+			rdata <= 32'h0000_0000;
+		end else begin
+			rdata <= mem[addr];
+			if (wen[0]) mem[addr][ 7: 0] <= wdata[ 7: 0];
+			if (wen[1]) mem[addr][15: 8] <= wdata[15: 8];
+			if (wen[2]) mem[addr][23:16] <= wdata[23:16];
+			if (wen[3]) mem[addr][31:24] <= wdata[31:24];
+		end
+	end
+endmodule
+
+
+/*
 module picosoc_regs (
 	input clk, wen,
 	input [5:0] waddr,
@@ -273,4 +322,4 @@ module picosoc_mem #(
 		if (wen[3]) mem[addr][31:24] <= wdata[31:24];
 	end
 endmodule
-
+*/
