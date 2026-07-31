@@ -3,6 +3,10 @@
 *.vcd
 *.fst
 *.fst.hier
+*.bin
+*.elf
+*.map
+fw/*.hex
 runs
 tt_submission
 src/user_config.json

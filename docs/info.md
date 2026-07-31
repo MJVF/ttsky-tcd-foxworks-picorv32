@@ -1,12 +1,3 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
 A small RISC-V microcontroller: a PicoRV32 core (RV32I) that executes
@@ -18,13 +9,17 @@ the design fits in a small area at the cost of speed.
 Memory map: SRAM at 0x0000_0000; flash execute-in-place window from
 0x80 (reset vector 0x400); UART at 0x0200_0004/8; GPIO at 0x0300_0000.
 
+Timing closed at 50MHz, however testing conducted at 25MHz clock with SPI-flash at clk/2.
+
 ## How to test
 
 Attach an SPI flash (or an RP2040 emulating one) holding a RISC-V
-program, hold rst_n low while it powers up, raise ena, then release
+program binary compiled according to the rulesets defined in the `fw` directory, hold rst_n low while it powers up, raise ena, then release
 rst_n. The chip boots and runs. A UART console at 115200 8N1 reports
-what it's doing; the sample firmware prints a banner and bounces a lit
+what it's doing; the sample firmware either:
+- BOUNCE: prints a banner and bounces a lit
 bit across the 8 output pins, with speed set by the input pins.
+- SELFTEST: runs a system diagnostic and outputs the results over UART. retrigerrable by writing a `'?'` to the UART.
 
 ## External hardware
 

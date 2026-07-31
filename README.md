@@ -1,6 +1,7 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# TCD Foxworks PicoRV32
+<img src="docs/TCD_Foxworks_Badge.jpg" alt="Alt Text" width="256" height="256">
 
 - [Read the documentation for project](docs/info.md)
 
