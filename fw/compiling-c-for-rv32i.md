@@ -108,20 +108,19 @@ loader. `sections.lds` instead states the physical design mapping of this chip:
   stack.
 
 
-## 6. Hosted vs this target, at a glance
+## 6. Hosted vs Freestanding
 
-| Concern                | Hosted `gcc` on Linux           | This firmware build                    |
+| Concern                | Hosted `gcc` on Linux           | Freestanding build                    |
 |------------------------|---------------------------------|----------------------------------------|
-| Who sets up sp/.data/.bss | OS loader + crt0             | `start.S` (we are the loader)          |
+| Sets up sp/.data/.bss | OS loader + crt0             | `start.S`           |
 | `main`                 | called by runtime, may return   | called by start.S, must never return   |
 | `printf`               | libc → kernel `write()`         | 9-line `print()` → MMIO register       |
 | `a * b`                | one `mul` instruction           | call into libgcc `__mulsi3`            |
-| Cost of a call         | ~ns, cache-hidden               | ~2.6 µs SPI re-fetch, visible          |
-| Stack                  | MBs, guard pages fault on overflow | ~250 B, overflow silently corrupts  |
+| Stack                  | MBs, guard pages fault on overflow | ~120 B, overflow silently corrupts  |
 | Addresses              | virtual, relocated, ASLR        | physical, absolute, final at link time |
 | Binary                 | ELF executed by loader          | raw bytes at flash offsets             |
 
-## 7. See it for yourself
+## 7. Run Compiler breakdown
 
 `make -C fw disasm` (annotated rv32i, watch for `__mulsi3` calls and
 the absence of `mul`), `make -C fw size` (text vs data+bss - the

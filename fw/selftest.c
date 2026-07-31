@@ -303,7 +303,7 @@ static void __attribute__((noinline)) t12_loop(void)
 
 static void run_suite(void)
 {
-	print("\nTT-SELFTEST v3 (verbose)\n");
+	print("\nTT-SELFTEST (verbose)\n");
 	print("MEMMAP - where things actually live:\n");
 	detail("run_suite (code, flash)  ", (uint32_t)(uintptr_t)&run_suite);
 	detail("rodata_tbl (const, flash)", (uint32_t)(uintptr_t)rodata_tbl);

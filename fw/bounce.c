@@ -73,7 +73,7 @@ void main(void)
 {
 	reg_uart_clkdiv = (CLK_HZ + BAUD / 2) / BAUD;  /* from build defines */
 
-	print("\n=== TT PicoSoC ===\nbounce: 1x1 square, 8x1 screen\n");
+	print("\n=== Foxworks PicoRV32 ===\nbounce: 1x1 square, 8x1 screen\n");
 
 	uint32_t pos = 0;
 	int dir = 1;

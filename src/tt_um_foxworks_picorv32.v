@@ -2,7 +2,7 @@
  * tt_um_foxworks_picorv32.v
  *
  * Tiny Tapeout top-level wrapper for PicoSoC (PicoRV32 + spimemio XIP +
- * simpleuart + 256 B SRAM + 8-in/8-out GPIO).
+ * simpleuart + 128 B SRAM + 8-in/8-out GPIO).
  *
  * THIS FILE IS THE TAPEOUT BOUNDARY. It is instantiated unchanged by:
  *   - the Tiny Tapeout LibreLane flow (tt_wrapper -> this module)
@@ -19,11 +19,11 @@
  *   uio[3]  bid  FLASH_IO1    (MISO in serial mode)
  *   uio[4]  bid  FLASH_IO2    (driven 1 in serial mode = /WP)
  *   uio[5]  bid  FLASH_IO3    (driven 1 in serial mode = /HOLD)
- *   uio[6]  out  SERIAL_TX    (115200 8N1 with reg_uart_clkdiv = 434)
+ *   uio[6]  out  SERIAL_TX    (115200 8N1 with reg_uart_clkdiv = 434 @ 50MHz)
  *   uio[7]  in   SERIAL_RX
  *
  * Memory map (as seen by the firmware):
- *   0x0000_0000 - 0x0000_00FF  SRAM, 256 B (MEM_WORDS = 64); stack top 0x100
+ *   0x0000_0000 - 0x0000_007F  SRAM, 128 B (MEM_WORDS = 32); stack top 0x80
  *   0x0000_0100 - 0x01FF_FFFF  SPI flash XIP window (flash offset = addr[23:0])
  *                              reset vector 0x0000_0400 = flash offset 0x400
  *   0x0200_0000                spimemio config (DO NOT WRITE: the RP2040
@@ -46,8 +46,8 @@ module tt_um_foxworks_picorv32 (
 	output wire [7:0] uio_out,  // bidirectional: output path
 	output wire [7:0] uio_oe,   // bidirectional: enable (1 = output)
 	input  wire       ena,      // TT mux select; qualifies uio_oe below
-	input  wire       clk,      // 25 MHz project clock
-	input  wire       rst_n     // active-low reset (from demo board RP2040)
+	input  wire       clk,      // project clock
+	input  wire       rst_n     // active-low reset
 );
 	// ------------------------------------------------------------------
 	// Reset synchronizer. rst_n arrives async from the RP2040 / PS GPIO.
@@ -65,8 +65,8 @@ module tt_um_foxworks_picorv32 (
 	// Input synchronizers (PMOD/pad inputs are asynchronous).
 	// ALL 24 pins are made firmware-visible: ui_sync and uio_sync feed
 	// the GPIO read register, so this is a generic rv32i micro with
-	// sight of its entire pinout, not a one-demo chip. Note the flash
-	// data-in pins (uio_in[2..5]) ALSO go to spimemio directly and
+	// sight of its entire pinout,. Note the flash data-in pins
+	// (uio_in[2..5]) ALSO go to spimemio directly and
 	// unsynchronized - that path is protocol-synchronous and needs
 	// same-cycle sampling; the synced copies here are observation only.
 	// ------------------------------------------------------------------
@@ -139,20 +139,10 @@ module tt_um_foxworks_picorv32 (
 		.flash_io2_di(flash_io2_di),
 		.flash_io3_di(flash_io3_di),
 
-		// IRQs: with ENABLE_IRQ=0 picorv32 prunes all interrupt logic,
-		// so these zero-ties are correct by construction, not left-over.
+		// IRQs: with ENABLE_IRQ=0 picorv32 prunes all interrupt logic.
 		// There is no interrupt fabric on Tiny Tapeout - an IRQ source
 		// can only be one of this design's own 24 pins or an internal
-		// peripheral. To enable interrupts later (costs roughly the IRQ
-		// PIC + shadow-handling logic in the core, ~1 tile):
-		//   1. set .ENABLE_IRQ(1) (and .ENABLE_IRQ_QREGS(1) if the
-		//      q-register instructions are wanted),
-		//   2. set .PROGADDR_IRQ to a real handler address (e.g.
-		//      32'h 0000_0410) and place the handler there,
-		//   3. wire the pins:  .irq_5(ui_sync[5]), .irq_6(ui_sync[6]),
-		//      .irq_7(ui_sync[7])  - synchronized, level-sensitive.
-		// No patch change needed: the fork made ENABLE_IRQ a picosoc
-		// parameter precisely so this stays a wrapper decision.
+		// peripheral.
 		.irq_5       (1'b0),
 		.irq_6       (1'b0),
 		.irq_7       (1'b0),
@@ -195,9 +185,7 @@ module tt_um_foxworks_picorv32 (
 	assign uo_out = gpio_out;
 
 	// ------------------------------------------------------------------
-	// Bidirectional pin mapping. During reset every uio is an input so
-	// the RP2040 (or the ZU3 harness) owns the flash bus - same
-	// convention TinyQV uses for external-memory projects.
+	// Bidirectional pin mapping. During reset every uio is an input.
 	// ------------------------------------------------------------------
 	assign uio_out = {1'b0,          // uio[7] SERIAL_RX (input)
 	                  ser_tx,        // uio[6] SERIAL_TX
@@ -211,9 +199,7 @@ module tt_um_foxworks_picorv32 (
 	// ena is high when the TT mux has selected this design (the mux
 	// already disconnects unselected projects physically, so per the TT
 	// template it may be ignored - but qualifying the output enables
-	// with it costs eight AND gates and makes "disabled means tristate"
-	// true by construction, on silicon and in the ZU3 harness alike,
-	// where ena is driven from AXI GPIO exactly like rst_n).
+	// with it costs eight AND gates.
 	assign uio_oe = (resetn && ena)
 	                       ? {1'b0,          // uio[7] SERIAL_RX
 	                          1'b1,          // uio[6] SERIAL_TX

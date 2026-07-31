@@ -27,3 +27,18 @@ An SPI flash on uio[3:0], or an RP2040 running the Tiny Tapeout
 spi-ram-emu firmware to emulate one. A USB-serial adapter on the UART
 pins (uio[6]/uio[7]) for the console. Optionally switches on the input
 PMOD and LEDs on the output PMOD.
+
+## Pinout
+
+| Pin     | Function                          |
+|---------|-----------------------------------|
+| ui[7:0] | GPIO in (readable at 0x0300_0000) |
+| uo[7:0] | GPIO out                          |
+| uio[0]  | FLASH_SCK (out)                   |
+| uio[1]  | FLASH_CSB (out)                   |
+| uio[2]  | FLASH_IO0 / MOSI (bidir)          |
+| uio[3]  | FLASH_IO1 / MISO (bidir)          |
+| uio[4]  | FLASH_IO2 (driven 1 = /WP)        |
+| uio[5]  | FLASH_IO3 (driven 1 = /HOLD)      |
+| uio[6]  | SERIAL_TX (115200)                |
+| uio[7]  | SERIAL_RX                         |

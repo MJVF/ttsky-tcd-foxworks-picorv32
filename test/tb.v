@@ -2,13 +2,12 @@
 `timescale 1ns / 1ps
 
 /*
- * tb.v - cocotb testbench shim for tt_um_foxworks_picorv32.
+ * tb.v - cocotb testbench for tt_um_foxworks_picorv32.
  *
  * Unlike the stock TT template (which instantiates only the DUT and
  * lets Python drive every pin), this design needs an SPI flash on its
  * uio bus before it can fetch a single instruction. So this shim wires
- * the DUT to tt_virtual_demoboard - the SAME Verilog flash model used
- * by the RTL bench and the ZU3 block design - and Python's job shrinks
+ * the DUT to tt_virtual_demoboard and Python's job shrinks
  * to: release reset, then watch uo_out and the UART for the verdict.
  *
  * The DUT is the real tt_um; under GL_TEST it is the hardened gate
@@ -40,7 +39,7 @@ module tb ();
   wire [7:0] uio_oe;
 
   // Second clock for the flash harness (Python only drives `clk`).
-  // 5x the DUT clock: enough to oversample SCK = clk/2 with margin.
+  // 5x the DUT clock (50MHz): enough to oversample SCK = clk/2 with margin.
   reg hrn_clk = 0;
   always #2 hrn_clk = ~hrn_clk;   // 250 MHz sim harness clock
 

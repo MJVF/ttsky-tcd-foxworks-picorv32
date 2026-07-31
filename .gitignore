@@ -4,8 +4,10 @@
 *.fst
 *.fst.hier
 *.bin
-*.elf
+*.bit
 *.map
+*.hwh
+*.elf
 fw/*.hex
 runs
 tt_submission
@@ -15,3 +17,4 @@ test/sim_build
 test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
+vivado_proj
