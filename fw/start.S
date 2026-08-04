@@ -1,5 +1,5 @@
 /*
- * start.S - TT-PicoSoC reset entry (rv32i, no compressed, no IRQ)
+ * start.S - TT-Foxworks-PicoRV32 reset entry (rv32i, no compressed, no IRQ)
  *
  * Placed at flash offset 0x400 = PROGADDR_RESET. Sets up the stack at
  * the top of the 128 B SRAM, copies .data from flash, zeroes .bss and
@@ -12,12 +12,7 @@
 _start:
 	li   sp, 0x80           /* stack top = end of SRAM (128 B) */
 
-	/* Zero ALL of SRAM (0x00..0x7F) first. On real silicon this gives
-	 * DFF-based RAM a defined power-up state; in gate-level sim it kills
-	 * the X that unwritten cells otherwise hold (which propagated to the
-	 * outputs at T05 - the first test to read an unwritten stack word).
-	 * Runs before .data copy and .bss clear, and before anything is
-	 * pushed, so zeroing the whole range is safe. */
+	/* Zero ALL of SRAM (0x00..0x7F) */
 	li   a1, 0x00
 	li   a2, 0x80
 0:	bgeu a1, a2, 1f
