@@ -3,12 +3,12 @@ project:
   title:        "TCD Foxworks PicoRV32"
   author:       "Michael John Flynn"
   discord:      "mjvf"
-  description:  "Modified open srouce PicoRV32 core to target TinyTapeout"
+  description:  "Modified open source PicoRV32 core to target TinyTapeout"
   language:     "Verilog"
-  clock_hz:     25000000       # 25MHz 25_000_000
+  clock_hz:     25000000       # 25MHz 25_000_000, GDS targets 50MHz
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "8x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
+  tiles: "8x2"
 
   top_module:  "tt_um_foxworks_picorv32"
 
