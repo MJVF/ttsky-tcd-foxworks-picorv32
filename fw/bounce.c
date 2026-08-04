@@ -1,20 +1,9 @@
 /*
- * bounce.c - a square bouncing back and forth across the screen.
+ * bounce.c - a square/led bouncing back and forth across the screen.
  *
  * The screen is the 8-bit GPIO output port (PMOD B on the ZU3 harness,
- * uo_out[7:0] on silicon). The square is one pixel. The pixel is an
- * LED. Art is about constraints.
- *
- * Why this is not driving an actual VGA cable: executing from serial
- * SPI flash, this core sustains roughly 0.3-1 MIPS. A 640x480@60 VGA
- * signal needs a new pixel every 40 ns and an hsync edge every 32 us -
- * three orders of magnitude out of reach of software timing. The
- * correct way to get real VGA out of this chip is a small hardware
- * timing generator (two counters + comparators, well under one tile)
- * with the square's X/Y in iomem registers that this loop would update
- * once per frame - that peripheral is the documented upgrade path, not
- * part of this build. The uo_out pinout is reserved to match the Tiny
- * VGA Pmod so it can be added without re-pinning.
+ * uo_out[7:0] on silicon). The square is one pixel (PYNQ). The pixel is an
+ * LED.
  *
  * Build notes: rv32i only - no hardware multiply/divide (ENABLE_MUL/
  * ENABLE_DIV are 0), so keep arithmetic to adds and shifts, or libgcc
