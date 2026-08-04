@@ -1,37 +1,12 @@
 /*
- * selftest.c - TT-PicoSoC power-on self-test (verbose, v3).
- *
- * v3 exists because v2 (verbose, all tests in one function) OVERFLOWED
- * THE STACK at T04 and hung with uo_out frozen at 0x13. Post-mortem:
- * concentrating every test's volatile operands into run_suite's frame
- * (~56 B), then stacking test_sram's 64 B buffer and the 3-deep print
- * chain on top, exceeded the ~250 B that exist. The failure was silent
- * because an underflowed sp wraps to 0xFFFFFFxx - which the wrapper's
- * default-ack treats as valid I/O space, so stack ops "succeed" with
- * garbage and ra corrupts without a trap.
- *
- * Structural consequences, now load-bearing:
- *   - EVERY test is its own noinline function: operands live only in
- *     that test's frame and die before the next test runs. Peak depth
- *     = run_suite + one test + detail/print chain, ~150 B worst case.
- *   - The free stack is painted with a sentinel at boot and the peak
- *     usage is measured and REPORTED every run ("stack peak >= N B").
- *     Stack consumption is telemetry now, not faith.
- *
- * Protocol (unchanged): uo_out 0x10+n during test n, 0xC3/0x3C verdict;
- * UART report with indented detail lines + "Tnn name PASS|FAIL" verdict
- * lines, "RESULT p/t PASS|FAIL", "ECHO-SERVICE" (byte+1 echo; '?'
- * re-runs the suite - the harness uartlite RX FIFO is only 16 bytes,
- * so the boot report is perishable).
- *
- * All expected constants computed mechanically, not by hand.
+ * selftest.c - TT-Foxworks-PicoRV32 power-on self-test.
  */
 
 #include <stdint.h>
 
 /* Chip clock and baud are BUILD-TIME facts: the UART divisor is
  * computed from them, so a mismatch with the real clock produces
- * garbage on the wire. Override per build, e.g.
+ * random noise. Override per build, e.g.
  *   make -C fw FWDEFS="-DCLK_HZ=25000000 -DBAUD=115200"
  * (25 MHz / 115200 -> divisor 217 -> 115207 baud, +0.006%) */
 #ifndef CLK_HZ
