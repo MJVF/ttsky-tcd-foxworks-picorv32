@@ -8,7 +8,7 @@
 
 2. Rebuild firmware at real speed, then build the project:
 
-Ensuure teh clock speeds match then:
+Ensure the clock speeds match then:
 
        make -C fw clean && make -C fw
        vivado -mode batch -source zu3/build_tt_picosoc.tcl
