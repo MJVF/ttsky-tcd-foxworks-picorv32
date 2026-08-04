@@ -6,7 +6,7 @@
 A small RISC-V microcontroller: a PicoRV32 core (RV32I) that executes
 in place from an external SPI flash, with 128 bytes of on-chip SRAM for
 stack and data, a UART, and an 8-in/8-out GPIO port. There is no on-chip
-program memory — every instruction is fetched over SPI as it runs, so
+program memory - every instruction is fetched over SPI as it runs, so
 the design fits in a small area at the cost of speed.
 
 - [Read the documentation for project](docs/info.md)
